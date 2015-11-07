@@ -3,12 +3,13 @@ from datetime import datetime
 
 class Comment():
 
-    def __init__(self, body=None, voted_users=[], created_at=None, modified_at=None, author=None):
+    def __init__(self, body=None, voted_users=[], created_at=None, modified_at=None, author=None, parent_thread=None):
         self.body = body
         self.created_at = created_at or datetime.now()
         self.modified_at = modified_at
         self.voted_users = voted_users
         self.author = author
+        self.parent_thread = parent_thread
 
     def modify_body(self, body):
         self.body = body
@@ -20,6 +21,9 @@ class Comment():
     def receive_vote_from(self, user):
         self.voted_users.append(user)
         return self.voted_users
+
+    def get_parent_thread(self):
+        return self.parent_thread
 
 
 class User():
@@ -37,3 +41,10 @@ class User():
         if not(self.name and self.screen_name and self.email and self.password):
             return False
         return True
+
+
+class Thread():
+
+    def __init__(self, name=None, comments=[]):
+        self.name = name
+        self.comments = comments
