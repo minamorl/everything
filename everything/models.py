@@ -48,3 +48,6 @@ class Thread():
     def __init__(self, name=None, comments=[]):
         self.name = name
         self.comments = comments
+
+    def get_comments(self):
+        return self.comments
