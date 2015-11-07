@@ -17,6 +17,8 @@ class Comment():
     def vote_count(self):
         return len(self.voted_users)
 
+    def receive_vote_from(self, user):
+        self.voted_users.append(user)
 
 class User():
 

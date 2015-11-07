@@ -30,3 +30,10 @@ def test_comment_voted_users():
 def test_comment_vote_count():
     comment1 = Comment(body, voted_users)
     assert comment1.vote_count() == len(voted_users)
+
+
+def test_receive_vote_from():
+    comment1 = Comment(body, voted_users)
+    accept = voted_users + ["cccc"]
+    comment1.receive_vote_from("cccc")
+    assert comment1.voted_users == accept
