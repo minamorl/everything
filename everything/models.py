@@ -36,6 +36,9 @@ class User():
         self.logged_in = logged_in
         self.auth_component = auth_component
 
+    def create_comment(self, thread, body):
+        return Comment(parent_thread=thread, body=body, author=self)
+
     def vote_to_comment(self, comment):
         return comment.receive_vote_from(self)
 

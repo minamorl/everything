@@ -1,4 +1,4 @@
-from everything.models import User, Comment
+from everything.models import User, Comment, Thread
 
 
 def test_user_init():
@@ -51,3 +51,8 @@ def test_login_if_passed_hashed():
 
     assert user_with_component.login(password) == True
     assert user_with_component.login(hashed_password) == False
+
+def test_create_comment():
+    user = User()
+    thread = Thread()
+    assert isinstance(user.create_comment(thread, "hogehogehoge"), Comment) == True
