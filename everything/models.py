@@ -28,12 +28,13 @@ class Comment():
 
 class User():
 
-    def __init__(self, name=None, screen_name=None, email=None, password=None, logged_in=False):
+    def __init__(self, name=None, screen_name=None, email=None, password=None, logged_in=False, auth_component=None):
         self.name = name
         self.screen_name = screen_name
         self.email = email
         self.password = password
         self.logged_in = logged_in
+        self.auth_component = auth_component
 
     def vote_to_comment(self, comment):
         return comment.receive_vote_from(self)
@@ -47,10 +48,14 @@ class User():
         return self.logged_in
 
     def login(self, password):
+        if self.auth_component:
+            password = self.auth_component.get_hashed_value(password)
+
         if self.password == password:
             self.logged_in = True
             return True
         return False
+
 
 class Thread():
 

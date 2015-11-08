@@ -2,7 +2,7 @@ from everything.models import User, Comment
 
 
 def test_user_init():
-    user = User(name=None, screen_name=None, email=None, password=None)
+    user = User()
 
 
 def test_is_valid_user():
@@ -33,3 +33,21 @@ def test_login():
 
     assert user.login(password) == True
     assert user.is_logged_in() == True
+
+
+def test_login_if_passed_hashed():
+    from everything.components import AuthComponent
+
+    auth_component = AuthComponent()
+
+    password = "password"
+    hashed_password = auth_component.get_hashed_value(password)
+
+    user = User(password=hashed_password)
+    user_with_component = User(password=hashed_password, auth_component=auth_component)
+
+    assert user.login(password) == False
+    assert user.login(hashed_password) == True
+
+    assert user_with_component.login(password) == True
+    assert user_with_component.login(hashed_password) == False
