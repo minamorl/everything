@@ -28,11 +28,12 @@ class Comment():
 
 class User():
 
-    def __init__(self, name=None, screen_name=None, email=None, password=None):
+    def __init__(self, name=None, screen_name=None, email=None, password=None, logged_in=False):
         self.name = name
         self.screen_name = screen_name
         self.email = email
         self.password = password
+        self.logged_in = logged_in
 
     def vote_to_comment(self, comment):
         return comment.receive_vote_from(self)
@@ -42,6 +43,14 @@ class User():
             return False
         return True
 
+    def is_logged_in(self):
+        return self.logged_in
+
+    def login(self, password):
+        if self.password == password:
+            self.logged_in = True
+            return True
+        return False
 
 class Thread():
 
