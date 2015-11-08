@@ -25,6 +25,9 @@ class Comment():
     def get_parent_thread(self):
         return self.parent_thread
 
+    def __repr__(self):
+        return "<comment body='{}' author={}>".format(self.body, self.author)
+
 
 class User():
 
@@ -37,7 +40,9 @@ class User():
         self.auth_component = auth_component
 
     def create_comment(self, thread, body):
-        return Comment(parent_thread=thread, body=body, author=self)
+        comment = Comment(parent_thread=thread, body=body, author=self)
+        thread.add_comment(comment)
+        return comment
 
     def vote_to_comment(self, comment):
         return comment.receive_vote_from(self)
@@ -59,6 +64,8 @@ class User():
             return True
         return False
 
+    def __repr__(self):
+        return "<author name='{}' screen_name='{}'>".format(self.name, self.screen_name)
 
 class Thread():
 
@@ -68,3 +75,6 @@ class Thread():
 
     def get_comments(self):
         return self.comments
+
+    def add_comment(self, comment):
+        self.comments.append(comment)
