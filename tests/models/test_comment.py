@@ -3,12 +3,13 @@ from everything.models import Comment, Thread
 body = "example"
 voted_users = ["0001", "0002"]
 
-def test_init():
-    comment1 = Comment("a")
-    comment2 = Comment("a")
-    assert comment1 != comment2
 
-    comment3 = Comment("a", author="hogehoge")
+def test_init():
+    comment = Comment()
+    comment.created_at
+    assert comment.created_at is not None
+    assert comment.modified_at is None
+    comment.author
 
 
 def test_modify():
