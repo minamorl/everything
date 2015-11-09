@@ -12,16 +12,24 @@ class PersistentData():
     def before_load(self):
         pass
 
+    def after_save(self, obj):
+        pass
+
+    def after_load(self):
+        return self
+
     def __str__(self):
         return str(self.id)
 
+    def __repr__(self):
+        return str(self.id)
 
 class Comment(PersistentData):
 
     def __init__(self, body="", voted_users=[], created_at=None, modified_at=None, author=None, parent_thread=None, id=None):
         self.body = body
         self.created_at = created_at or DatetimeProxy(datetime.now())
-        self.modified_at = DatetimeProxy(modified_at)
+        self.modified_at = modified_at
         self.voted_users = voted_users
         self.author = PersistentProxy(author)
         self.parent_thread = PersistentProxy(parent_thread)
@@ -41,8 +49,11 @@ class Comment(PersistentData):
     def get_parent_thread(self):
         return self.parent_thread
 
-    def __repr__(self):
-        return "<comment body='{}' author={}>".format(self.body, self.author)
+    def after_load(self):
+        voted_users_list = eval(self.voted_users)
+        self.voted_users = []
+        for user in voted_users:
+            self.voted_users.append(persistent.load(User, user))
 
 
 class User(PersistentData):
@@ -65,7 +76,7 @@ class User(PersistentData):
         cls.default_auth_component = auth_component
 
     def create_comment(self, thread, body):
-        comment = Comment(parent_thread=thread, body=body, author=self)
+        comment = Comment(parent_thread=PersistentProxy(thread), body=body, author=self)
         thread.add_comment(comment)
         return comment
 
@@ -89,9 +100,6 @@ class User(PersistentData):
             return True
         return False
 
-    def __repr__(self):
-        return "<author name='{}' screen_name='{}'>".format(self.name, self.screen_name)
-
     def before_save(self):
         self.auth_component = None
 
@@ -101,7 +109,7 @@ class User(PersistentData):
 
 class Thread(PersistentData):
 
-    def __init__(self, name=None, comments=[], created_at=None, id=id):
+    def __init__(self, name=None, comments=[], created_at=None, id=None):
         self.id = id
         self.name = name
         self.comments = comments
@@ -112,3 +120,10 @@ class Thread(PersistentData):
 
     def add_comment(self, comment):
         self.comments.append(comment)
+
+    def after_load(self):
+        comments_list = eval(self.comments)
+        self.comments = []
+        for user in comments_list:
+            self.comments.append(persistent.load(User, user))
+        return self
