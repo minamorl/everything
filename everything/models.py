@@ -1,6 +1,6 @@
 from datetime import datetime
 import abc
-from .components import PersistentComponent, PersistentProxy
+from .components import PersistentComponent, PersistentProxy, DatetimeProxy
 
 
 class PersistentData(metaclass=abc.ABCMeta):
@@ -18,8 +18,8 @@ class Comment(PersistentData):
 
     def __init__(self, body=None, voted_users=[], created_at=None, modified_at=None, author=None, parent_thread=None):
         self.body = body
-        self.created_at = created_at or datetime.now()
-        self.modified_at = modified_at
+        self.created_at = created_at or DatetimeProxy(datetime.now())
+        self.modified_at = DatetimeProxy(modified_at)
         self.voted_users = voted_users
         self.author = PersistentProxy(author)
         self.parent_thread = parent_thread

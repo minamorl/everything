@@ -6,11 +6,6 @@ voted_users = ["0001", "0002"]
 
 def test_init():
     comment = Comment()
-    comment.created_at
-    assert comment.created_at is not None
-    assert comment.modified_at is None
-    comment.author
-
 
 def test_modify():
     comment1 = Comment("a")

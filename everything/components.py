@@ -39,3 +39,17 @@ class PersistentProxy(wrapt.ObjectProxy):
 
     def __str__(self):
         return str(self.__wrapped__.id)
+
+
+class DatetimeProxy(wrapt.ObjectProxy):
+
+    _format = "%Y-%m-%d %H:%M:%s"
+
+    @classmethod
+    def compose_from_string(cls, str):
+        from datetime import datetime
+        obj = datetime.strptime(_format)
+        return cls(obj)
+
+    def __str__(self):
+        return str(self.__wrapped__.strftime(DatetimeProxy._format))
