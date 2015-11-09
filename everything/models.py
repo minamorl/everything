@@ -1,19 +1,19 @@
 from datetime import datetime
-import abc
 from .components import PersistentComponent, PersistentProxy, DatetimeProxy, BooleanProxy
 
 persistent = PersistentComponent()
 
 
-class PersistentData(metaclass=abc.ABCMeta):
+class PersistentData():
 
-    @abc.abstractmethod
     def before_save(self):
         pass
 
-    @abc.abstractmethod
     def before_load(self):
         pass
+
+    def __str__(self):
+        return str(self.id)
 
 
 class Comment(PersistentData):
@@ -44,11 +44,6 @@ class Comment(PersistentData):
     def __repr__(self):
         return "<comment body='{}' author={}>".format(self.body, self.author)
 
-    def before_save(self):
-        pass
-
-    def before_load(self):
-        pass
 
 class User(PersistentData):
 
@@ -117,9 +112,3 @@ class Thread(PersistentData):
 
     def add_comment(self, comment):
         self.comments.append(comment)
-
-    def before_save(self):
-        pass
-
-    def before_load(self):
-        pass
