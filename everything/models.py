@@ -1,6 +1,8 @@
 from datetime import datetime
 import abc
-from .components import PersistentComponent, PersistentProxy, DatetimeProxy
+from .components import PersistentComponent, PersistentProxy, DatetimeProxy, BooleanProxy
+
+persistent = PersistentComponent()
 
 
 class PersistentData(metaclass=abc.ABCMeta):
@@ -16,17 +18,18 @@ class PersistentData(metaclass=abc.ABCMeta):
 
 class Comment(PersistentData):
 
-    def __init__(self, body=None, voted_users=[], created_at=None, modified_at=None, author=None, parent_thread=None):
+    def __init__(self, body="", voted_users=[], created_at=None, modified_at=None, author=None, parent_thread=None, id=None):
         self.body = body
         self.created_at = created_at or DatetimeProxy(datetime.now())
         self.modified_at = DatetimeProxy(modified_at)
         self.voted_users = voted_users
         self.author = PersistentProxy(author)
-        self.parent_thread = parent_thread
+        self.parent_thread = PersistentProxy(parent_thread)
+        self.id = id
 
     def modify_body(self, body):
         self.body = body
-        self.modified_at = datetime.now()
+        self.modified_at = DatetimeProxy(datetime.now())
 
     def vote_count(self):
         return len(self.voted_users)
@@ -51,13 +54,14 @@ class User(PersistentData):
 
     default_auth_component = None
 
-    def __init__(self, name=None, screen_name=None, email=None, password=None, logged_in=False, auth_component=None, id=None):
+    def __init__(self, name="", screen_name="", email="", password="", logged_in=False, created_at=None, auth_component=None, id=None):
         self.id = id
         self.name = name
         self.screen_name = screen_name
         self.email = email
         self.password = password
-        self.logged_in = logged_in
+        self.created_at = created_at or DatetimeProxy(datetime.now())
+        self.logged_in = BooleanProxy(logged_in)
         self.auth_component = auth_component or User.default_auth_component
 
     @classmethod
@@ -97,15 +101,16 @@ class User(PersistentData):
         self.auth_component = None
 
     def before_load(self):
-        self.logged_in = self.logged_in == "True"
         self.auth_component = default_auth_component
 
 
 class Thread(PersistentData):
 
-    def __init__(self, name=None, comments=[]):
+    def __init__(self, name=None, comments=[], created_at=None, id=id):
+        self.id = id
         self.name = name
         self.comments = comments
+        self.created_at = created_at or DatetimeProxy(datetime.now())
 
     def get_comments(self):
         return self.comments
@@ -114,9 +119,7 @@ class Thread(PersistentData):
         self.comments.append(comment)
 
     def before_save(self):
-        # All comments should be convert into referecened id
         pass
 
     def before_load(self):
-        # id -> obj
         pass

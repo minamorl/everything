@@ -16,19 +16,24 @@ class AuthComponent():
 
 class PersistentComponent():
 
-    def __init__(self):
-        pass
+    def __init__(self, r=None):
+        self.r = r or redis.StrictRedis(encoding='utf-8')
 
-    def save(self, obj, key=None):
-        r = redis.StrictRedis(encoding='utf-8')
-
+    def save(self, obj):
+        r = self.r
         classname = obj.__class__.__name__
         params = inspect.signature(obj.__init__).parameters.values()
+
+        obj.before_save()
+
         for param in params:
-            r.hset("everything:{}:{}".format(classname, key), param.name, getattr(obj, param.name))
+            if getattr(obj, param.name) is not None:
+                r.hset("everything:{}:{}".format(classname, obj.id), param.name, getattr(obj, param.name))
+            else:
+                r.hdel("everything:{}:{}".format(classname, obj.id), param.name)
 
     def load(self, cls, key):
-        r = redis.StrictRedis(encoding='utf-8', decode_responses=True)
+        r = self.r
         classname = cls.__name__
 
         params = inspect.signature(cls.__init__).parameters.values()
@@ -36,6 +41,11 @@ class PersistentComponent():
 
 
 class PersistentProxy(wrapt.ObjectProxy):
+
+    @classmethod
+    def compose_from_id(cls, kls, key):
+        obj = PersistentComponent().load(kls, key)
+        return cls(obj)
 
     def __str__(self):
         return str(self.__wrapped__.id)
@@ -53,3 +63,14 @@ class DatetimeProxy(wrapt.ObjectProxy):
 
     def __str__(self):
         return str(self.__wrapped__.strftime(DatetimeProxy._format))
+
+
+class BooleanProxy(wrapt.ObjectProxy):
+
+    def __init__(self, wrapped):
+        if wrapped == "True" or wrapped is True:
+            wrapped = True
+        else:
+            wrapped = False
+
+        super().__init__(wrapped)
