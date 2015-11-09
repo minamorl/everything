@@ -1,14 +1,27 @@
 from datetime import datetime
+import abc
+from .components import PersistentComponent, PersistentProxy
 
 
-class Comment():
+class PersistentData(metaclass=abc.ABCMeta):
+
+    @abc.abstractmethod
+    def before_save(self):
+        pass
+
+    @abc.abstractmethod
+    def before_load(self):
+        pass
+
+
+class Comment(PersistentData):
 
     def __init__(self, body=None, voted_users=[], created_at=None, modified_at=None, author=None, parent_thread=None):
         self.body = body
         self.created_at = created_at or datetime.now()
         self.modified_at = modified_at
         self.voted_users = voted_users
-        self.author = author
+        self.author = PersistentProxy(author)
         self.parent_thread = parent_thread
 
     def modify_body(self, body):
@@ -28,16 +41,29 @@ class Comment():
     def __repr__(self):
         return "<comment body='{}' author={}>".format(self.body, self.author)
 
+    def before_save(self):
+        pass
 
-class User():
+    def before_load(self):
+        pass
 
-    def __init__(self, name=None, screen_name=None, email=None, password=None, logged_in=False, auth_component=None):
+class User(PersistentData):
+
+    default_auth_component = None
+
+    def __init__(self, name=None, screen_name=None, email=None, password=None, logged_in=False, auth_component=None, id=None):
+        self.id = id
         self.name = name
         self.screen_name = screen_name
         self.email = email
         self.password = password
         self.logged_in = logged_in
-        self.auth_component = auth_component
+        self.auth_component = auth_component or User.default_auth_component
+
+    @classmethod
+    def set_default_auth_component(cls, auth_component):
+        """Set a default auth component to User."""
+        cls.default_auth_component = auth_component
 
     def create_comment(self, thread, body):
         comment = Comment(parent_thread=thread, body=body, author=self)
@@ -67,7 +93,15 @@ class User():
     def __repr__(self):
         return "<author name='{}' screen_name='{}'>".format(self.name, self.screen_name)
 
-class Thread():
+    def before_save(self):
+        self.auth_component = None
+
+    def before_load(self):
+        self.logged_in = self.logged_in == "True"
+        self.auth_component = default_auth_component
+
+
+class Thread(PersistentData):
 
     def __init__(self, name=None, comments=[]):
         self.name = name
@@ -78,3 +112,11 @@ class Thread():
 
     def add_comment(self, comment):
         self.comments.append(comment)
+
+    def before_save(self):
+        # All comments should be convert into referecened id
+        pass
+
+    def before_load(self):
+        # id -> obj
+        pass

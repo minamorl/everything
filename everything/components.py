@@ -1,6 +1,7 @@
 import hashlib
 import redis
 import inspect
+import wrapt
 
 
 class AuthComponent():
@@ -32,3 +33,9 @@ class PersistentComponent():
 
         params = inspect.signature(cls.__init__).parameters.values()
         return cls(**{param.name: r.hget("everything:{}:{}".format(classname, key), param.name) for param in params if param.name != "self"})
+
+
+class PersistentProxy(wrapt.ObjectProxy):
+
+    def __str__(self):
+        return str(self.__wrapped__.id)
