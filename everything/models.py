@@ -50,10 +50,15 @@ class Comment(PersistentData):
         return self.parent_thread
 
     def after_load(self):
-        voted_users_list = eval(self.voted_users)
-        self.voted_users = []
-        for user in voted_users:
-            self.voted_users.append(persistent.load(User, user))
+        #  print(self.author)
+        author_id = self.author
+        self.author = persistent.load(User, author_id)
+
+        #  voted_users_list = eval(self.voted_users)
+        #  self.voted_users = []
+        #  for user in voted_users:
+            #  self.voted_users.append(persistent.load(User, user))
+        return self
 
 
 class User(PersistentData):
@@ -73,8 +78,7 @@ class User(PersistentData):
     @classmethod
     def set_default_auth_component(cls, auth_component):
         """Set a default auth component to User."""
-        cls.default_auth_component = auth_component
-
+        cls.default_auth_component = auth_component 
     def create_comment(self, thread, body):
         comment = Comment(parent_thread=PersistentProxy(thread), body=body, author=self)
         thread.add_comment(comment)
@@ -103,13 +107,10 @@ class User(PersistentData):
     def before_save(self):
         self.auth_component = None
 
-    def before_load(self):
-        self.auth_component = default_auth_component
-
 
 class Thread(PersistentData):
 
-    def __init__(self, name=None, comments=[], created_at=None, id=None):
+    def __init__(self, name="", comments=[], created_at=None, id=None):
         self.id = id
         self.name = name
         self.comments = comments
@@ -120,10 +121,12 @@ class Thread(PersistentData):
 
     def add_comment(self, comment):
         self.comments.append(comment)
-
+    
     def after_load(self):
-        comments_list = eval(self.comments)
+        comments = eval(self.comments)
         self.comments = []
-        for user in comments_list:
-            self.comments.append(persistent.load(User, user))
+        for comment_id in comments:
+            obj = persistent.load(Comment, comment_id)
+            self.comments.append(obj)
+
         return self

@@ -33,7 +33,6 @@ class PersistentComponent():
         r = self.r
         classname = obj.__class__.__name__
         params = inspect.signature(obj.__init__).parameters.values()
-
         obj.before_save()
 
         obj.id = obj.id or self.update_id(obj)
@@ -59,8 +58,7 @@ class PersistentComponent():
     def load_all(self, cls):
         classname = cls.__name__
         max_id = self.r.get("everything:{}:__latest__".format(classname))
-        for i in range(int(max_id)+1):
-            print("here:")
+        for i in range(int(max_id) + 1):
             yield self.load(cls, str(i))
 
 
@@ -72,8 +70,10 @@ class PersistentProxy(wrapt.ObjectProxy):
         return cls(obj)
 
     def __str__(self):
-        return str(self.__wrapped__.id)
-
+        try:
+            return str(self.__wrapped__.id)
+        except AttributeError:
+            return self.__wrapped__
 
 class DatetimeProxy(wrapt.ObjectProxy):
 
