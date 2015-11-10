@@ -60,6 +60,15 @@ class PersistentComponent():
             yield self.load(cls, str(i))
 
 
+    def find(self, cls, cond):
+        for item in self.load_all(cls):
+            if cond(item):
+                return item
+        return None
+
+
+
+
 class PersistentProxy(wrapt.ObjectProxy):
 
     @classmethod
