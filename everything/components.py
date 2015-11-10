@@ -73,6 +73,7 @@ class PersistentProxy(wrapt.ObjectProxy):
         except AttributeError:
             return self.__wrapped__
 
+
 class DatetimeProxy(wrapt.ObjectProxy):
 
     _format = "%Y-%m-%d %H:%M:%s"
