@@ -19,15 +19,14 @@ class PersistentComponent():
     def __init__(self, r=None):
         self.r = r or redis.StrictRedis(encoding='utf-8', decode_responses=True)
 
-
     def update_id(self, obj):
         classname = obj.__class__.__name__
-        if self.r.get("everything:{}:__latest__".format(classname)) is not None :
+        if self.r.get("everything:{}:__latest__".format(classname)) is not None:
             obj.id = int(self.r.get("everything:{}:__latest__".format(classname))) + 1
             self.r.set("everything:{}:__latest__".format(classname), obj.id)
         else:
             obj.id = 0
-            self.r.set("everything:{}:__latest__".format(classname), obj.id)
+            self.r.set("everything:{}:__latest__".format(classname), "0")
         return obj.id
 
     def save(self, obj):
@@ -53,6 +52,16 @@ class PersistentComponent():
         params = inspect.signature(cls.__init__).parameters.values()
         obj = cls(**{param.name: r.hget("everything:{}:{}".format(classname, key), param.name) for param in params if param.name != "self"}).after_load()
         return obj
+
+    def find(self, cls, key, val):
+        pass
+
+    def load_all(self, cls):
+        classname = cls.__name__
+        max_id = self.r.get("everything:{}:__latest__".format(classname))
+        for i in range(int(max_id)+1):
+            print("here:")
+            yield self.load(cls, str(i))
 
 
 class PersistentProxy(wrapt.ObjectProxy):
