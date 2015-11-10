@@ -1,4 +1,5 @@
 import hashlib
+import operator
 import redis
 import inspect
 import wrapt
@@ -51,9 +52,6 @@ class PersistentComponent():
         params = inspect.signature(cls.__init__).parameters.values()
         obj = cls(**{param.name: r.hget("everything:{}:{}".format(classname, key), param.name) for param in params if param.name != "self"}).after_load()
         return obj
-
-    def find(self, cls, key, val):
-        pass
 
     def load_all(self, cls):
         classname = cls.__name__
