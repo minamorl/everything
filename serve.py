@@ -42,6 +42,9 @@ def compose_json_from_comment(comment, query):
         "body": comment.body,
         "thread": {
             "name": comment.get_parent_thread().name
+        },
+        "auth": {
+            "name": session.get('user')
         }
     }
 
