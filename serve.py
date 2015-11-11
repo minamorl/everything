@@ -53,7 +53,7 @@ def api_thread_get():
 
     r = collections.deque(maxlen=20)
     if thread is None:
-        return jsonify(results=r)
+        return jsonify(results=[])
 
     comments = thread.get_comments()
 
@@ -110,16 +110,31 @@ def thread():
 
 @app.route('/login')
 def login():
-    user = find_user(request.args['name'])
+    user = find_user(request.args.get('name'))
     if user:
-        session['user'] = user.name
-        session['user_id'] = user.id
-        session['expired_at'] = datetime.now() + timedelta(minutes=100)
-        r = user.login(request.args['password'])
-        save(user)
-        return "okay"
+        t = user.login(request.args.get('password'))
+        if t is True:
+            session['user'] = user.name
+            session['user_id'] = user.id
+            session['expired_at'] = datetime.now() + timedelta(minutes=100)
+            save(user)
+            return "okay"
+        else:
+            session.clear()
+            return "Authentification failed."
     else:
         return "Authentification failed."
+
+
+@app.route('/signup')
+def signup():
+    user = find_user(request.args.get('name'))
+    if user:
+
+        return "This username is already taken."
+    user = User(name=request.args.get('name'), password=request.args.get('password'))
+    save(user)
+    return "ok"
 
 
 if __name__ == '__main__':
