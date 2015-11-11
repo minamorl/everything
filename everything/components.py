@@ -58,7 +58,6 @@ class PersistentComponent():
         classname = cls.__name__
         max_id = self.r.get("everything:{}:__latest__".format(classname)) or 0 
         for i in range(int(max_id) + 1):
-            print("time:", i)
             yield self.load(cls, str(i))
 
 
