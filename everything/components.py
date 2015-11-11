@@ -50,19 +50,21 @@ class PersistentComponent():
         r = self.r
         classname = cls.__name__
         params = inspect.signature(cls.__init__).parameters.values()
-        obj = cls(**{param.name: r.hget("everything:{}:{}".format(classname, key), param.name) for param in params if param.name != "self"}).after_load()
+        obj = cls(**{param.name: r.hget("everything:{}:{}".format(classname, key), param.name) for param in params if param.name != "self"})
+        obj.after_load()
         return obj
 
     def load_all(self, cls):
         classname = cls.__name__
-        max_id = self.r.get("everything:{}:__latest__".format(classname))
+        max_id = self.r.get("everything:{}:__latest__".format(classname)) or 0 
         for i in range(int(max_id) + 1):
+            print("time:", i)
             yield self.load(cls, str(i))
 
 
     def find(self, cls, cond):
         for item in self.load_all(cls):
-            if cond(item):
+            if cond(item) is True:
                 return item
         return None
 

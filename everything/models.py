@@ -16,7 +16,7 @@ class PersistentData():
         pass
 
     def after_load(self):
-        return self
+        pass
 
     def __str__(self):
         return str(self.id)
@@ -47,18 +47,12 @@ class Comment(PersistentData):
         return self.voted_users
 
     def get_parent_thread(self):
-        return self.parent_thread
+        parent_thread_id = str(self.parent_thread)
+        return persistent.load(Thread, parent_thread_id)
 
     def after_load(self):
-        #  print(self.author)
         author_id = self.author
         self.author = persistent.load(User, author_id)
-
-        #  voted_users_list = eval(self.voted_users)
-        #  self.voted_users = []
-        #  for user in voted_users:
-            #  self.voted_users.append(persistent.load(User, user))
-        return self
 
 
 class User(PersistentData):
@@ -80,9 +74,8 @@ class User(PersistentData):
         """Set a default auth component to User."""
         cls.default_auth_component = auth_component 
     def create_comment(self, thread, body):
-        comment = Comment(parent_thread=PersistentProxy(thread), body=body, author=self)
-        thread.add_comment(comment)
-        return comment
+        return Comment(parent_thread=PersistentProxy(thread), body=body, author=self)
+        
 
     def vote_to_comment(self, comment):
         return comment.receive_vote_from(self)
@@ -113,20 +106,14 @@ class Thread(PersistentData):
     def __init__(self, name="", comments=[], created_at=None, id=None):
         self.id = id
         self.name = name
-        self.comments = comments
         self.created_at = created_at or DatetimeProxy(datetime.now())
+        self.comments = comments
 
     def get_comments(self):
-        return self.comments
+        for comment in persistent.load_all(Comment):
+            if comment.get_parent_thread().id == self.id:
+                yield persistent.load(Comment, comment.id)
+                
 
     def add_comment(self, comment):
-        self.comments.append(comment)
-    
-    def after_load(self):
-        comments = eval(self.comments)
-        self.comments = []
-        for comment_id in comments:
-            obj = persistent.load(Comment, comment_id)
-            self.comments.append(obj)
-
-        return self
+        pass

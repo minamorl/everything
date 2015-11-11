@@ -41,7 +41,7 @@ def compose_json_from_comment(comment, query):
         },
         "body": comment.body,
         "thread": {
-            "name": query,
+            "name": comment.get_parent_thread().name
         }
     }
 
@@ -52,10 +52,14 @@ def api_thread_get():
     thread = find(Thread, lambda x: x.name == query)
 
     r = collections.deque(maxlen=20)
-    if thread is None:
+
+    if thread is None and query != "":
         return jsonify(results=[])
 
-    comments = thread.get_comments()
+    if query == "":
+        comments = load_all(Comment)
+    else:
+        comments = thread.get_comments()
 
     for comment in comments:
         _json = compose_json_from_comment(comment, query)
@@ -87,10 +91,11 @@ def api_comment():
     body = request.args.get("body", "")
 
     thread = find(Thread, lambda x: x.name == query) or Thread(name=query)
-    user = find(User, lambda x: x.id == session.get("user_id"))
+    user = find(User, lambda user: user.name == session.get("user"))
     comment = user.create_comment(thread, body)
-    save(comment)
+
     save(thread)
+    save(comment)
 
     return jsonify(results={"message": "ok"})
 
@@ -114,9 +119,7 @@ def login():
     if user:
         t = user.login(request.args.get('password'))
         if t is True:
-            session['user'] = user.name
-            session['user_id'] = user.id
-            session['expired_at'] = datetime.now() + timedelta(minutes=100)
+            create_session(user)
             save(user)
             return "okay"
         else:
@@ -126,14 +129,20 @@ def login():
         return "Authentification failed."
 
 
+def create_session(user):
+    session['user'] = user.name
+    session['user_id'] = user.id
+    session['expired_at'] = datetime.now() + timedelta(minutes=100)
+
+
 @app.route('/signup')
 def signup():
     user = find_user(request.args.get('name'))
     if user:
-
         return "This username is already taken."
     user = User(name=request.args.get('name'), password=request.args.get('password'))
     save(user)
+    create_session(user)
     return "ok"
 
 
