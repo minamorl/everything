@@ -6,6 +6,7 @@ import sys
 import functools
 from flask import Flask, request, session, jsonify
 from datetime import datetime, timedelta
+import collections
 
 #  redis.StrictRedis().flushall()
 
@@ -50,7 +51,7 @@ def api_thread_get():
     query = request.args.get("q", "")
     thread = find(Thread, lambda x: x.name == query)
 
-    r = []
+    r = collections.deque(maxlen=20)
     if thread is None:
         return jsonify(results=r)
 
@@ -58,9 +59,8 @@ def api_thread_get():
 
     for comment in comments:
         _json = compose_json_from_comment(comment, query)
-        r.append(_json)
-    r.reverse()
-    return jsonify(results=r)
+        r.appendleft(_json)
+    return jsonify(results=list(r))
 
 
 def protected(func):
