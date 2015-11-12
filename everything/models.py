@@ -1,28 +1,8 @@
 from datetime import datetime
-from .components import PersistentComponent, PersistentProxy, DatetimeProxy, BooleanProxy
+from redisorm.core import Persistent, PersistentData
+from redisorm.proxy import BooleanProxy, DatetimeProxy, PersistentProxy
 
-persistent = PersistentComponent()
-
-
-class PersistentData():
-
-    def before_save(self):
-        pass
-
-    def before_load(self):
-        pass
-
-    def after_save(self, obj):
-        pass
-
-    def after_load(self):
-        pass
-
-    def __str__(self):
-        return str(self.id)
-
-    def __repr__(self):
-        return str(self.id)
+persistent = Persistent("everything")
 
 class Comment(PersistentData):
 
