@@ -1,5 +1,6 @@
-from everything.components import AuthComponent, PersistentComponent, PersistentProxy
 from everything.models import Thread, Comment, User
+from everything.components import AuthComponent
+from redisorm.core import Persistent, PersistentData
 import os
 import redis
 import sys
@@ -10,11 +11,11 @@ import collections
 from functools import reduce
 
 #  redis.StrictRedis().flushall()
-
-save = PersistentComponent().save
-load = PersistentComponent().load
-load_all = PersistentComponent().load_all
-find = PersistentComponent().find
+persistent = Persistent("everything")
+save       = persistent.save
+load       = persistent.load
+load_all   = persistent.load_all
+find       = persistent.find
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("EVERYTHING_FLASK_SALT")

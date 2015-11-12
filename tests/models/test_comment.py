@@ -29,9 +29,3 @@ def test_receive_vote_from():
     accept = voted_users + ["cccc"]
     comment1.receive_vote_from("cccc")
     assert comment1.voted_users == accept
-
-
-def test_get_parent_thread():
-    parent_thread = Thread()
-    comment = Comment(parent_thread=parent_thread)
-    assert comment.get_parent_thread() == parent_thread
