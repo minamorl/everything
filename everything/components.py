@@ -51,7 +51,7 @@ class PersistentComponent():
         classname = cls.__name__
         params = inspect.signature(cls.__init__).parameters.values()
         obj = cls(**{param.name: r.hget("everything:{}:{}".format(classname, key), param.name) for param in params 
-            if param.name != "self" and r.hget("everything:{}:{}".format(classname, key), param.name) is not None})
+            if hasattr(params,"name") and param.name != "self" and r.hget("everything:{}:{}".format(classname, key), param.name) is not None})
         obj.after_load()
         return obj
 
