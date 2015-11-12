@@ -7,6 +7,7 @@ import functools
 from flask import Flask, request, session, jsonify
 from datetime import datetime, timedelta
 import collections
+from functools import reduce
 
 #  redis.StrictRedis().flushall()
 
@@ -22,30 +23,10 @@ auth_component = AuthComponent(salt=os.environ.get("EVERYTHING_AUTH_SALT"))
 User.set_default_auth_component(auth_component)
 
 
-
-@app.route("/debug")
-def debug():
-    print(load(User, 0).name)
-    print(load(Thread, 0).name)
-    return ""
-
-
 def find_user(username):
     user = find(User, lambda x: x.name == username)
     return user
 
-
-@app.route('/check')
-def home():
-
-    if session.get('user') is None or session.get('expired_at') < datetime.now():
-        return "This page is protected. Please login first."
-
-    return "hi, {}".format(session.get('user'))
-
-def deepgetattr(obj, attr):
-    from functools import reduce
-    return reduce(getattr, attr.split('.'), obj)
 
 def compose_json_from_comment(comment, query):
     try:
@@ -84,6 +65,7 @@ def api_login_get():
             save(user)
             r = {"message": "okay"}
     return jsonify(results=r)
+
 
 @app.route('/api/logout.json')
 def api_logout_get():
@@ -152,26 +134,11 @@ def api_comment():
     return jsonify(results={"message": "ok"})
 
 
-@app.route('/login')
-def login():
-    user = find_user(request.args.get('name'))
-    if user:
-        t = user.login(request.args.get('password'))
-        if t is True:
-            create_session(user)
-            save(user)
-            return "okay"
-        else:
-            session.clear()
-            return "Authentification failed."
-    else:
-        return "Authentification failed."
-
-
 def create_session(user):
     session['user'] = user.name
     session['user_id'] = user.id
     session['expired_at'] = datetime.now() + timedelta(minutes=100)
+
 
 @app.route('/api/signup.json')
 def signup_api_get():
@@ -189,16 +156,6 @@ def signup_api_get():
 
     create_session(user)
     return jsonify(results={"message": "okay"})
-
-@app.route('/signup')
-def signup():
-    user = find_user(request.args.get('name'))
-    if user:
-        return "This username is already taken."
-    user = User(name=request.args.get('name'), password=request.args.get('password'))
-    save(user)
-    create_session(user)
-    return "ok"
 
 
 if __name__ == '__main__':
