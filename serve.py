@@ -18,13 +18,16 @@ find = PersistentComponent().find
 app = Flask(__name__)
 app.secret_key = os.environ.get("EVERYTHING_FLASK_SALT")
 
+auth_component = AuthComponent(salt=os.environ.get("EVERYTHING_AUTH_SALT"))
+User.set_default_auth_component(auth_component)
+
 
 def find_user(username):
     user = find(User, lambda x: x.name == username)
     return user
 
 
-@app.route('/')
+@app.route('/check')
 def home():
 
     if session.get('user') is None or session.get('expired_at') < datetime.now():
@@ -47,6 +50,30 @@ def compose_json_from_comment(comment, query):
             "name": session.get('user')
         }
     }
+
+
+@app.route('/api/login.json')
+def api_login_get():
+    user = find_user(request.args.get('username'))
+    r = {"message": "Authentification failed."}
+    session.clear()
+    if user:
+        t = user.login(request.args.get('password'))
+        if t is True:
+            create_session(user)
+            save(user)
+            r = {"message": "okay"}
+    return jsonify(results=r)
+
+@app.route('/api/logout.json')
+def api_logout_get():
+    user = find_user(request.args.get('name'))
+    r = {"message": "ok"}
+    if user:
+        user.logged_in = False
+        save(user)
+    session.clear()
+    return jsonify(results=r)
 
 
 @app.route('/api/thread.json')
@@ -137,6 +164,22 @@ def create_session(user):
     session['user_id'] = user.id
     session['expired_at'] = datetime.now() + timedelta(minutes=100)
 
+@app.route('/api/signup.json')
+def signup_api_get():
+    if request.args.get('username', "") == "":
+        return jsonify(results={"message": "Missing username."})
+    if request.args.get('password', "") == "":
+        return jsonify(results={"message": "Missing password"})
+
+    user = find_user(request.args.get('username'))
+    if user:
+        return jsonify(results={"message": "This username is already taken."})
+
+    user = User(name=request.args.get('username'), password=auth_component.get_hashed_value(request.args.get('password')))
+    save(user)
+
+    create_session(user)
+    return jsonify(results={"message": "okay"})
 
 @app.route('/signup')
 def signup():
