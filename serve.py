@@ -43,12 +43,14 @@ def home():
 
     return "hi, {}".format(session.get('user'))
 
+def deepgetattr(obj, attr):
+    from functools import reduce
+    return reduce(getattr, attr.split('.'), obj)
 
 def compose_json_from_comment(comment, query):
     return {
         "author": {
-            "name": comment.author.name,
-            "screen_name": comment.author.screen_name
+            "name": deepgetattr(comment, "author.name")
         },
         "body": comment.body,
         "thread": {
