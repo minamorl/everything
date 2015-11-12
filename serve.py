@@ -48,13 +48,23 @@ def deepgetattr(obj, attr):
     return reduce(getattr, attr.split('.'), obj)
 
 def compose_json_from_comment(comment, query):
+    try:
+        author_name = comment.get_author().name
+    except:
+        author_name = ""
+
+    try:
+        thread_name = comment.get_parent_thread().name
+    except:
+        thread_name = ""
+
     return {
         "author": {
-            "name": deepgetattr(comment, "author.name")
+            "name": author_name
         },
         "body": comment.body,
         "thread": {
-            "name": comment.get_parent_thread().name
+            "name": thread_name
         },
         "auth": {
             "name": session.get('user')
@@ -140,19 +150,6 @@ def api_comment():
     save(comment)
 
     return jsonify(results={"message": "ok"})
-
-
-@app.route('/thread')
-def thread():
-    query = request.args["q"]
-    thread = find(Thread, lambda x: x.name == query) or Thread(name=query)
-    save(thread)
-
-    comments = thread.get_comments()
-    r = ""
-    for comment in comments:
-        r += comment.author.id + comment.author.name + "> " + comment.body + "  <br>"
-    return r
 
 
 @app.route('/login')
