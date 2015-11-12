@@ -57,7 +57,9 @@ class PersistentComponent():
 
     def load_all(self, cls):
         classname = cls.__name__
-        max_id = self.r.get("everything:{}:__latest__".format(classname)) or 0 
+        if not self.r.exists("everything:{}:__latest__".format(classname)):
+            return
+        max_id = self.r.get("everything:{}:__latest__".format(classname))
         for i in range(int(max_id) + 1):
             yield self.load(cls, str(i))
 

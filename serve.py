@@ -48,13 +48,23 @@ def deepgetattr(obj, attr):
     return reduce(getattr, attr.split('.'), obj)
 
 def compose_json_from_comment(comment, query):
+    try:
+        author_name = comment.get_author().name
+    except:
+        author_name = ""
+
+    try:
+        thread_name = comment.get_parent_thread().name
+    except:
+        thread_name = ""
+
     return {
         "author": {
-            "name": deepgetattr(comment, "author.name")
+            "name": author_name
         },
         "body": comment.body,
         "thread": {
-            "name": comment.get_parent_thread().name
+            "name": thread_name
         },
         "auth": {
             "name": session.get('user')
