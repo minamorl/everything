@@ -142,19 +142,6 @@ def api_comment():
     return jsonify(results={"message": "ok"})
 
 
-@app.route('/thread')
-def thread():
-    query = request.args["q"]
-    thread = find(Thread, lambda x: x.name == query) or Thread(name=query)
-    save(thread)
-
-    comments = thread.get_comments()
-    r = ""
-    for comment in comments:
-        r += comment.author.id + comment.author.name + "> " + comment.body + "  <br>"
-    return r
-
-
 @app.route('/login')
 def login():
     user = find_user(request.args.get('name'))

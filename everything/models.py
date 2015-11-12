@@ -50,9 +50,12 @@ class Comment(PersistentData):
         parent_thread_id = str(self.parent_thread)
         return persistent.load(Thread, parent_thread_id)
 
-    def after_load(self):
+    def get_author():
         author_id = self.author
-        self.author = persistent.load(User, author_id)
+        author = None
+        if self.author is not None:
+            author = persistent.load(User, author_id)
+        return author
 
 
 class User(PersistentData):
