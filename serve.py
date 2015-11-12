@@ -22,6 +22,14 @@ auth_component = AuthComponent(salt=os.environ.get("EVERYTHING_AUTH_SALT"))
 User.set_default_auth_component(auth_component)
 
 
+
+@app.route("/debug")
+def debug():
+    print(load(User, 0).name)
+    print(load(Thread, 0).name)
+    return ""
+
+
 def find_user(username):
     user = find(User, lambda x: x.name == username)
     return user
