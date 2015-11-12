@@ -119,6 +119,8 @@ def protected(func):
 def api_comment():
     query = request.args.get("q", "")
     body = request.args.get("body", "")
+    if query == "":
+        return jsonify(results={"error"})
 
     thread = find(Thread, lambda x: x.name == query) or Thread(name=query)
     user = find(User, lambda user: user.name == session.get("user"))
