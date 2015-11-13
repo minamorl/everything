@@ -10,6 +10,8 @@ from datetime import datetime, timedelta
 import collections
 from functools import reduce
 
+
+MAX_COMMENT_NUM = 30
 #  redis.StrictRedis().flushall()
 persistent = Persistent("everything")
 save       = persistent.save
@@ -54,13 +56,13 @@ def compose_json_from_comment(comment, query):
     }
 
 
-@app.route('/api/login.json')
+@app.route('/api/login.json', methods=["POST"])
 def api_login_get():
-    user = find_user(request.args.get('username'))
+    user = find_user(request.form.get('username'))
     r = {"message": "Authentification failed."}
     session.clear()
     if user:
-        t = user.login(request.args.get('password'))
+        t = user.login(request.form.get('password'))
         if t is True:
             create_session(user)
             save(user)
@@ -70,11 +72,7 @@ def api_login_get():
 
 @app.route('/api/logout.json')
 def api_logout_get():
-    user = find_user(request.args.get('name'))
     r = {"message": "ok"}
-    if user:
-        user.logged_in = False
-        save(user)
     session.clear()
     return jsonify(results=r)
 
@@ -84,7 +82,7 @@ def api_thread_get():
     query = request.args.get("q", "")
     thread = find(Thread, lambda x: x.name == query)
 
-    r = collections.deque(maxlen=20)
+    r = collections.deque(maxlen=MAX_COMMENT_NUM)
 
     if thread is None and query != "":
         return jsonify(results=[])
@@ -117,11 +115,11 @@ def protected(func):
     return wrapper
 
 
-@app.route('/api/comment.json')
+@app.route('/api/comment.json', methods=["POST"])
 @protected
 def api_comment():
-    query = request.args.get("q", "")
-    body = request.args.get("body", "")
+    query = request.form.get("q", "")
+    body = request.form.get("body", "")
     if query == "":
         return jsonify(results={"error"})
 
@@ -141,18 +139,18 @@ def create_session(user):
     session['expired_at'] = datetime.now() + timedelta(minutes=100)
 
 
-@app.route('/api/signup.json')
+@app.route('/api/signup.json', methods=["POST"])
 def signup_api_get():
-    if request.args.get('username', "") == "":
+    if request.form.get('username', "") == "":
         return jsonify(results={"message": "Missing username."})
-    if request.args.get('password', "") == "":
+    if request.form.get('password', "") == "":
         return jsonify(results={"message": "Missing password"})
 
-    user = find_user(request.args.get('username'))
+    user = find_user(request.form.get('username'))
     if user:
         return jsonify(results={"message": "This username is already taken."})
 
-    user = User(name=request.args.get('username'), password=auth_component.get_hashed_value(request.args.get('password')))
+    user = User(name=request.form.get('username'), password=auth_component.get_hashed_value(request.form.get('password')))
     save(user)
 
     create_session(user)
