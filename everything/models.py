@@ -27,8 +27,7 @@ class Comment(PersistentData):
         return self.voted_users
 
     def get_parent_thread(self):
-        parent_thread_id = str(self.parent_thread)
-        return persistent.load(Thread, parent_thread_id)
+        return self.parent_thread.retrive(Thread, persistent)
 
     def get_author(self):
         author_id = self.author
