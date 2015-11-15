@@ -87,11 +87,8 @@ def api_thread_get():
         return jsonify(results=[])
 
     if query == "":
-<<<<<<< HEAD
-        comments = reversed(itertools.islice(load_all(Comment, reverse=True), MAX_COMMENT_NUM))
-=======
-        comments = load_all(Comment)
->>>>>>> parent of 4c6c298... improve performance
+        comments = list(itertools.islice(load_all(Comment, reverse=True), MAX_COMMENT_NUM))
+        comments.reverse()
     else:
         comments = thread.get_comments()
 
