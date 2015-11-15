@@ -9,6 +9,7 @@ from flask import Flask, request, session, jsonify
 from datetime import datetime, timedelta
 import collections
 from functools import reduce
+import itertools
 
 
 MAX_COMMENT_NUM = 30
