@@ -13,7 +13,6 @@ import itertools
 
 
 MAX_COMMENT_NUM = 30
-#  redis.StrictRedis().flushall()
 persistent = Persistent("everything")
 save       = persistent.save
 load       = persistent.load
@@ -89,7 +88,7 @@ def api_thread_get():
         return jsonify(results=[])
 
     if query == "":
-        comments = itertools.islice(load_all(Comment, reverse=True), MAX_COMMENT_NUM)
+        comments = reversed(itertools.islice(load_all(Comment, reverse=True), MAX_COMMENT_NUM))
     else:
         comments = thread.get_comments()
 
