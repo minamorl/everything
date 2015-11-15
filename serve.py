@@ -9,6 +9,7 @@ from flask import Flask, request, session, jsonify
 from datetime import datetime, timedelta
 import collections
 from functools import reduce
+import itertools
 
 
 MAX_COMMENT_NUM = 30
@@ -88,7 +89,7 @@ def api_thread_get():
         return jsonify(results=[])
 
     if query == "":
-        comments = load_all(Comment)
+        comments = itertools.islice(load_all(Comment, reverse=True), MAX_COMMENT_NUM)
     else:
         comments = thread.get_comments()
 
