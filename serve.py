@@ -136,7 +136,7 @@ def api_comment():
 def create_session(user):
     session['user'] = user.name
     session['user_id'] = user.id
-    session['expired_at'] = datetime.now() + timedelta(minutes=100)
+    session['expired_at'] = datetime.now() + timedelta(hours=100)
 
 
 @app.route('/api/signup.json', methods=["POST"])
