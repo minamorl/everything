@@ -1,6 +1,7 @@
 from datetime import datetime
 from redisorm.core import Persistent, PersistentData
 from redisorm.proxy import BooleanProxy, DatetimeProxy, PersistentProxy
+import itertools
 
 persistent = Persistent("everything")
 
@@ -92,10 +93,13 @@ class Thread(PersistentData):
         self.comments = comments
 
     def get_comments(self):
-        for comment in persistent.load_all(Comment):
-            if comment.get_parent_thread().id == self.id:
-                yield persistent.load(Comment, comment.id)
-                
+        comment_ids = persistent.load_all_only_keys(Comment, "id")
+        comment_parent_thread_ids = persistent.load_all_only_keys(Comment, "parent_thread")
+
+        for comment_id, parent_thread_id in itertools.zip_longest(comment_ids, comment_parent_thread_ids):
+
+            if parent_thread_id == self.id:
+                yield persistent.load(Comment, comment_id)
 
     def add_comment(self, comment):
         pass
