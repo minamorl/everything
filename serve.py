@@ -12,7 +12,7 @@ from functools import reduce
 import itertools
 
 
-MAX_COMMENT_NUM = 30
+MAX_COMMENT_NUM = 100
 persistent = Persistent("everything")
 save       = persistent.save
 load       = persistent.load
@@ -88,14 +88,18 @@ def api_thread_get():
         return jsonify(results=[])
 
     if query == "":
-        comments = list(itertools.islice(load_all(Comment, reverse=True), MAX_COMMENT_NUM))
-        comments.reverse()
+        comments = itertools.islice(load_all(Comment, reverse=True), MAX_COMMENT_NUM)
     else:
         comments = thread.get_comments()
 
     for comment in comments:
         _json = compose_json_from_comment(comment, query)
-        r.appendleft(_json)
+        if query == "":
+            r.append(_json)
+        else:
+            r.appendleft(_json)
+
+
     return jsonify(results=list(r))
 
 
