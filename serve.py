@@ -11,7 +11,7 @@ import collections
 from functools import reduce
 import itertools
 
-
+TOP_MAX_COMMENT_NUM = 20
 MAX_COMMENT_NUM = 100
 persistent = Persistent("everything")
 save       = persistent.save
@@ -88,7 +88,7 @@ def api_thread_get():
         return jsonify(results=[])
 
     if query == "":
-        comments = itertools.islice(load_all(Comment, reverse=True), MAX_COMMENT_NUM)
+        comments = itertools.islice(load_all(Comment, reverse=True), TOP_MAX_COMMENT_NUM)
     else:
         comments = thread.get_comments()
 
