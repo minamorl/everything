@@ -74,7 +74,7 @@ def api_thread_list():
     
     comments = itertools.islice(load_all(Comment, reverse=True), TOP_MAX_COMMENT_NUM)
 
-    r = collections.deque(maxlen=TOP_MAX_COMMENT_NUM)
+    r = []
 
     list_title=[]
     for c in comments:
@@ -86,9 +86,7 @@ def api_thread_list():
             list_title.append(title)
 
 
-    
-
-    return jsonify(results=list(r))
+    return jsonify(results=r)
 
 @app.route('/api/login.json', methods=["POST"])
 def api_login_get():
