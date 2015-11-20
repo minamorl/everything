@@ -81,7 +81,7 @@ def api_thread_list():
         title = c.get_parent_thread().name
         if title not in list_title:
             r.append({ 
-                "title": c.get_parent_thread().name
+                "title": title
             })
             list_title.append(title)
 
