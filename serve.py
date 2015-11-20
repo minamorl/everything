@@ -120,16 +120,13 @@ def api_thread_get():
         return jsonify(results=[])
 
     if query == "":
-        comments = itertools.islice(load_all(Comment, reverse=True), TOP_MAX_COMMENT_NUM)
+        return jsonify(results=[])
     else:
         comments = thread.get_comments()
 
     for comment in comments:
         _json = compose_json_from_comment(comment, query)
-        if query == "":
-            r.append(_json)
-        else:
-            r.appendleft(_json)
+        r.appendleft(_json)
 
 
     return jsonify(results=list(r))
