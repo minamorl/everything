@@ -12,6 +12,7 @@ from functools import reduce
 import itertools
 
 TOP_MAX_COMMENT_NUM = 100
+RECENT_COMMENT_NUM = 20
 MAX_COMMENT_NUM = 100
 persistent = Persistent("everything")
 save       = persistent.save
@@ -40,8 +41,20 @@ def auth():
     }
     if session.get('user') == "":
         r = {
-            "message": "User are not authorized."
+            "message": "You are not authorized."
         }
+    return jsonify(results=r)
+
+@app.route('/api/recent.json')
+def api_recent():
+    comments = itertools.islice(load_all(Comment, reverse=True), TOP_MAX_COMMENT_NUM)
+
+    r = []
+
+    for comment in comments:
+        _json = compose_json_from_comment(comment, "")
+        r.append(_json)
+
     return jsonify(results=r)
 
 def compose_json_from_comment(comment, query):
