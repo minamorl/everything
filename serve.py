@@ -30,6 +30,19 @@ def find_user(username):
     user = find(User, lambda x: x.name == username)
     return user
 
+@app.route('/api/auth.json')
+def auth():
+
+    r = {
+        "auth": {
+            "name": session.get('user')
+        }
+    }
+    if session.get('user') == "":
+        r = {
+            "message": "User are not authorized."
+        }
+    return jsonify(results=r)
 
 def compose_json_from_comment(comment, query):
     try:
