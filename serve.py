@@ -11,7 +11,7 @@ import collections
 from functools import reduce
 import itertools
 
-TOP_MAX_COMMENT_NUM = 20
+TOP_MAX_COMMENT_NUM = 100
 MAX_COMMENT_NUM = 100
 persistent = Persistent("everything")
 save       = persistent.save
@@ -30,6 +30,19 @@ def find_user(username):
     user = find(User, lambda x: x.name == username)
     return user
 
+@app.route('/api/auth.json')
+def auth():
+
+    r = {
+        "auth": {
+            "name": session.get('user')
+        }
+    }
+    if session.get('user') == "":
+        r = {
+            "message": "User are not authorized."
+        }
+    return jsonify(results=r)
 
 def compose_json_from_comment(comment, query):
     try:
@@ -55,6 +68,27 @@ def compose_json_from_comment(comment, query):
         }
     }
 
+
+@app.route('/api/index.json')
+def api_thread_list():
+    
+    comments = itertools.islice(load_all(Comment, reverse=True), TOP_MAX_COMMENT_NUM)
+
+    r = collections.deque(maxlen=TOP_MAX_COMMENT_NUM)
+
+    list_title=[]
+    for c in comments:
+        title = c.get_parent_thread().name
+        if title not in list_title:
+            r.append({ 
+                "title": c.get_parent_thread().name
+            })
+            list_title.append(title)
+
+
+    
+
+    return jsonify(results=list(r))
 
 @app.route('/api/login.json', methods=["POST"])
 def api_login_get():
