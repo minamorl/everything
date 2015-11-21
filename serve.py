@@ -191,7 +191,7 @@ def signup_api_get():
     if request.form.get('username', "") == "":
         return jsonify(results={"message": "Missing username."})
     if request.form.get('password', "") == "":
-        return jsonify(results={"message": "Missing password"})
+        return jsonify(results={"message": "Missing password."})
 
     user = find_user(request.form.get('username'))
     if user:
