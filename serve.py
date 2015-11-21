@@ -15,10 +15,10 @@ TOP_MAX_COMMENT_NUM = 100
 RECENT_COMMENT_NUM = 20
 MAX_COMMENT_NUM = 100
 persistent = Persistent("everything")
-save       = persistent.save
-load       = persistent.load
-load_all   = persistent.load_all
-find       = persistent.find
+save = persistent.save
+load = persistent.load
+load_all = persistent.load_all
+find = persistent.find
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("EVERYTHING_FLASK_SALT")
@@ -30,6 +30,7 @@ User.set_default_auth_component(auth_component)
 def find_user(username):
     user = find(User, lambda x: x.name == username)
     return user
+
 
 @app.route('/api/auth.json')
 def auth():
@@ -45,6 +46,7 @@ def auth():
         }
     return jsonify(results=r)
 
+
 @app.route('/api/recent.json')
 def api_recent():
     comments = itertools.islice(load_all(Comment, reverse=True), TOP_MAX_COMMENT_NUM)
@@ -56,6 +58,7 @@ def api_recent():
         r.append(_json)
 
     return jsonify(results=r)
+
 
 def compose_json_from_comment(comment, query):
     try:
@@ -84,22 +87,22 @@ def compose_json_from_comment(comment, query):
 
 @app.route('/api/index.json')
 def api_thread_list():
-    
+
     comments = itertools.islice(load_all(Comment, reverse=True), TOP_MAX_COMMENT_NUM)
 
     r = []
 
-    list_title=[]
+    list_title = []
     for c in comments:
         title = c.get_parent_thread().name
         if title not in list_title:
-            r.append({ 
+            r.append({
                 "title": title
             })
             list_title.append(title)
 
-
     return jsonify(results=r)
+
 
 @app.route('/api/login.json', methods=["POST"])
 def api_login_get():
@@ -140,7 +143,6 @@ def api_thread_get():
     for comment in comments:
         _json = compose_json_from_comment(comment, query)
         r.appendleft(_json)
-
 
     return jsonify(results=list(r))
 
