@@ -120,7 +120,7 @@ def api_login_get():
 
 @app.route('/api/logout.json')
 def api_logout_get():
-    r = {"message": "ok"}
+    r = {"message": "okay"}
     session.clear()
     return jsonify(results=r)
 
@@ -151,12 +151,11 @@ def protected(func):
 
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        error = {"error": "This page is protected. Please login first."}
+        error = {"message": "This page is protected. Please login first."}
 
         if session.get('user') is None or session.get('expired_at') < datetime.now():
 
             response = jsonify(results=error)
-            response.status_code = 403
             return response
 
         return func(*args, **kwargs)
@@ -169,8 +168,8 @@ def protected(func):
 def api_comment():
     query = request.form.get("q", "")
     body = request.form.get("body", "")
-    if query == "":
-        return jsonify(results={"error"})
+    if query == "" or body == "":
+        return jsonify(results={"message": "Thread title and body must be not empty."})
 
     thread = find(Thread, lambda x: x.name == query) or Thread(name=query)
     user = find(User, lambda user: user.name == session.get("user"))
@@ -179,7 +178,7 @@ def api_comment():
     save(thread)
     save(comment)
 
-    return jsonify(results={"message": "ok"})
+    return jsonify(results={"message": "okay"})
 
 
 def create_session(user):
