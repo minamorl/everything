@@ -11,10 +11,13 @@ import collections
 from functools import reduce
 import itertools
 
+
+APP_NAME = "everything"
 TOP_MAX_COMMENT_NUM = 100
 RECENT_COMMENT_NUM = 20
 MAX_COMMENT_NUM = 100
-persistent = Persistent("everything")
+
+persistent = Persistent(APP_NAME)
 save = persistent.save
 load = persistent.load
 load_all = persistent.load_all
@@ -88,13 +91,13 @@ def compose_json_from_comment(comment, query):
 @app.route('/api/index.json')
 def api_thread_list():
 
-    comments = itertools.islice(load_all(Comment, reverse=True), TOP_MAX_COMMENT_NUM)
-
     r = []
+    red = redis.StrictRedis(decode_responses=True)
 
+    recent_titles = red.lrange(":".join([APP_NAME, "RecentThread"]), 0, 100)
     list_title = []
-    for c in comments:
-        title = c.get_parent_thread().name
+
+    for title in recent_titles:
         if title not in list_title:
             r.append({
                 "title": title
@@ -127,7 +130,10 @@ def api_logout_get():
 
 @app.route('/api/thread.json')
 def api_thread_get():
+
     query = request.args.get("q", "")
+    if query == "":
+        return jsonify(results=[])
     thread = find(Thread, lambda x: x.name == query)
 
     r = collections.deque(maxlen=MAX_COMMENT_NUM)
@@ -135,8 +141,6 @@ def api_thread_get():
     if thread is None and query != "":
         return jsonify(results=[])
 
-    if query == "":
-        return jsonify(results=[])
     else:
         comments = thread.get_comments()
 
@@ -177,6 +181,10 @@ def api_comment():
 
     save(thread)
     save(comment)
+
+    r = redis.StrictRedis(decode_responses=True)
+    r.sadd(":".join([APP_NAME, "ThreadIndex"]), query)
+    r.lpush(":".join([APP_NAME, "RecentThread"]), query)
 
     return jsonify(results={"message": "okay"})
 
