@@ -54,11 +54,7 @@ def auth():
 def api_recent():
     comments = itertools.islice(load_all(Comment, reverse=True), TOP_MAX_COMMENT_NUM)
 
-    r = []
-
-    for comment in comments:
-        _json = compose_json_from_comment(comment, "")
-        r.append(_json)
+    r = [compose_json_from_comment(comment, "") for comment in comments]
 
     return jsonify(results=r)
 
