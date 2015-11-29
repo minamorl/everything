@@ -52,7 +52,7 @@ def auth():
 
 @app.route('/api/recent.json')
 def api_recent():
-    comments = itertools.islice(load_all(Comment, reverse=True), TOP_MAX_COMMENT_NUM)
+    comments = itertools.islice(load_all(Comment, reverse=True), RECENT_COMMENT_NUM)
 
     r = [compose_json_from_comment(comment, "") for comment in comments]
 
