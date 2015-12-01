@@ -15,7 +15,7 @@ import itertools
 APP_NAME = "everything"
 TOP_MAX_COMMENT_NUM = 100
 RECENT_COMMENT_NUM = 20
-MAX_COMMENT_NUM = 100
+MAX_COMMENT_NUM = 40
 
 persistent = Persistent(APP_NAME)
 save = persistent.save
