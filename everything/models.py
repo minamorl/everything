@@ -95,11 +95,16 @@ class Thread(PersistentData):
     def get_comments(self, limit, page):
         comment_ids = persistent.load_all_only_keys(Comment, "id", reverse=True)
         comment_parent_thread_ids = persistent.load_all_only_keys(Comment, "parent_thread", reverse=True)
-        pair = itertools.islice(itertools.zip_longest(comment_ids, comment_parent_thread_ids), limit*(page-1), limit*page)
+        all_thread_comments = itertools.zip_longest(comment_ids, comment_parent_thread_ids)
 
-        for comment_id, parent_thread_id in pair:
+        results = []
+        for comment_id, parent_thread_id in all_thread_comments:
             if parent_thread_id == self.id:
-                yield persistent.load(Comment, comment_id)
+                results.append(comment_id)
+        
+        for comment_id in itertools.islice(results, limit*(page-1), limit*page):
+            yield persistent.load(Comment, comment_id)
+
 
     def add_comment(self, comment):
         pass
