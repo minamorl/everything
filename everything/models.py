@@ -92,12 +92,12 @@ class Thread(PersistentData):
         self.created_at = created_at or DatetimeProxy(datetime.now())
         self.comments = comments
 
-    def get_comments(self, limit=20, page=1):
+    def get_comments(self, limit, page):
         comment_ids = persistent.load_all_only_keys(Comment, "id", reverse=True)
         comment_parent_thread_ids = persistent.load_all_only_keys(Comment, "parent_thread", reverse=True)
-        pair = list(itertools.islice(itertools.zip_longest(comment_ids, comment_parent_thread_ids), limit*(page-1), limit*page))
+        pair = itertools.islice(itertools.zip_longest(comment_ids, comment_parent_thread_ids), limit*(page-1), limit*page)
 
-        for comment_id, parent_thread_id in reversed(pair):
+        for comment_id, parent_thread_id in pair:
             if parent_thread_id == self.id:
                 yield persistent.load(Comment, comment_id)
 
