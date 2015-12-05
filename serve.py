@@ -90,7 +90,7 @@ def api_thread_list():
     r = []
     red = redis.StrictRedis(decode_responses=True)
 
-    recent_titles = red.lrange(":".join([APP_NAME, "RecentThread"]), 0, 100)
+    recent_titles = red.lrange(":".join([APP_NAME, "RecentThread"]), 0, 500)
     list_title = []
 
     for title in recent_titles:
