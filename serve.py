@@ -138,17 +138,17 @@ def api_thread_get():
         return jsonify(results=[])
     thread = find(Thread, lambda x: x.name == query)
 
-    r = collections.deque(maxlen=MAX_COMMENT_NUM)
-
     if thread is None and query != "":
         return jsonify(results=[])
 
     else:
         comments = thread.get_comments(limit=MAX_COMMENT_NUM ,page=page)
 
+    r = collections.deque(maxlen=MAX_COMMENT_NUM)
+
     for comment in comments:
         _json = compose_json_from_comment(comment, query)
-        r.appendleft(_json)
+        r.append(_json)
 
     return jsonify(results=list(r))
 
