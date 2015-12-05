@@ -15,7 +15,7 @@ import itertools
 APP_NAME = "everything"
 TOP_MAX_COMMENT_NUM = 100
 RECENT_COMMENT_NUM = 20
-MAX_COMMENT_NUM = 40
+MAX_COMMENT_NUM = 10
 
 persistent = Persistent(APP_NAME)
 save = persistent.save
@@ -128,6 +128,12 @@ def api_logout_get():
 def api_thread_get():
 
     query = request.args.get("q", "")
+    page = request.args.get("page", 1)
+    try:
+        page = int(page)
+    except ValueError:
+        page = 1
+    
     if query == "":
         return jsonify(results=[])
     thread = find(Thread, lambda x: x.name == query)
@@ -138,7 +144,7 @@ def api_thread_get():
         return jsonify(results=[])
 
     else:
-        comments = thread.get_comments()
+        comments = thread.get_comments(limit=MAX_COMMENT_NUM ,page=page)
 
     for comment in comments:
         _json = compose_json_from_comment(comment, query)
