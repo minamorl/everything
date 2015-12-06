@@ -22,6 +22,7 @@ save = persistent.save
 load = persistent.load
 load_all = persistent.load_all
 find = persistent.find
+get_max_id = persistent.get_max_id
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("EVERYTHING_FLASK_SALT")
@@ -52,9 +53,22 @@ def auth():
 
 @app.route('/api/recent.json')
 def api_recent():
-    comments = itertools.islice(load_all(Comment, reverse=True), RECENT_COMMENT_NUM)
+    def get_comments(limit, page):
+        all_thread_comments = range(get_max_id(Comment), -1 , -1)
 
-    r = [compose_json_from_comment(comment, "") for comment in comments]
+        results = []
+        for comment_id in all_thread_comments:
+            results.append(comment_id)
+        
+        for comment_id in itertools.islice(results, limit*(page-1), limit*page):
+            yield persistent.load(Comment, comment_id)
+
+    page = request.args.get("page", 1)
+    try:
+        page = int(page)
+    except ValueError:
+        page = 1
+    r = [compose_json_from_comment(comment, "") for comment in get_comments(MAX_COMMENT_NUM, page)]
 
     return jsonify(results=r)
 
