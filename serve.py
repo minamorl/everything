@@ -32,8 +32,8 @@ User.set_default_auth_component(auth_component)
 
 
 @app.before_request
-def make_session_permenent():
-    session.permenent = True
+def make_session_permanent():
+    session.permanent = True
 
 
 def find_user(username):
