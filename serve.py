@@ -31,6 +31,11 @@ auth_component = AuthComponent(salt=os.environ.get("EVERYTHING_AUTH_SALT"))
 User.set_default_auth_component(auth_component)
 
 
+@app.before_request
+def make_session_permenent():
+    session.permenent = True
+
+
 def find_user(username):
     user = find(User, lambda x: x.name == username)
     return user
@@ -54,13 +59,13 @@ def auth():
 @app.route('/api/recent.json')
 def api_recent():
     def get_comments(limit, page):
-        all_thread_comments = range(get_max_id(Comment), -1 , -1)
+        all_thread_comments = range(get_max_id(Comment), -1, -1)
 
         results = []
         for comment_id in all_thread_comments:
             results.append(comment_id)
-        
-        for comment_id in itertools.islice(results, limit*(page-1), limit*page):
+
+        for comment_id in itertools.islice(results, limit * (page - 1), limit * page):
             yield persistent.load(Comment, comment_id)
 
     page = request.args.get("page", 1)
@@ -147,7 +152,7 @@ def api_thread_get():
         page = int(page)
     except ValueError:
         page = 1
-    
+
     if query == "":
         return jsonify(results=[])
     thread = find(Thread, lambda x: x.name == query)
@@ -156,7 +161,7 @@ def api_thread_get():
         return jsonify(results=[])
 
     else:
-        comments = thread.get_comments(limit=MAX_COMMENT_NUM ,page=page)
+        comments = thread.get_comments(limit=MAX_COMMENT_NUM, page=page)
 
     r = collections.deque(maxlen=MAX_COMMENT_NUM)
 
