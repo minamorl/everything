@@ -5,7 +5,16 @@ import itertools
 
 persistent = Persistent("everything")
 
+
 class Comment(PersistentData):
+
+    body = Column()
+    created_at = Column()
+    modified_at = Column()
+    voted_users = Column()
+    author = Column()
+    parent_thread = Column()
+    id = Column()
 
     def __init__(self, body="", voted_users=[], created_at=None, modified_at=None, author=None, parent_thread=None, id=None):
         self.body = body
@@ -40,6 +49,14 @@ class Comment(PersistentData):
 
 class User(PersistentData):
 
+    id = Column()
+    name = Column()
+    screen_name = Column()
+    email = Column()
+    password = Column()
+    created_at = Column()
+    logged_in = Column()
+    auth_component = Column()
     default_auth_component = None
 
     def __init__(self, name="", screen_name="", email="", password="", logged_in=False, created_at=None, auth_component=None, id=None):
@@ -55,10 +72,10 @@ class User(PersistentData):
     @classmethod
     def set_default_auth_component(cls, auth_component):
         """Set a default auth component to User."""
-        cls.default_auth_component = auth_component 
+        cls.default_auth_component = auth_component
+
     def create_comment(self, thread, body):
         return Comment(parent_thread=PersistentProxy(thread), body=body, author=self)
-        
 
     def vote_to_comment(self, comment):
         return comment.receive_vote_from(self)
@@ -86,6 +103,11 @@ class User(PersistentData):
 
 class Thread(PersistentData):
 
+    id = Column()
+    name = Column()
+    created_at = Column()
+    comments = Column()
+
     def __init__(self, name="", comments=[], created_at=None, id=None):
         self.id = id
         self.name = name
@@ -101,10 +123,9 @@ class Thread(PersistentData):
         for comment_id, parent_thread_id in all_thread_comments:
             if parent_thread_id == self.id:
                 results.append(comment_id)
-        
-        for comment_id in itertools.islice(results, limit*(page-1), limit*page):
-            yield persistent.load(Comment, comment_id)
 
+        for comment_id in itertools.islice(results, limit * (page - 1), limit * page):
+            yield persistent.load(Comment, comment_id)
 
     def add_comment(self, comment):
         pass
