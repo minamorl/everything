@@ -1,5 +1,5 @@
 from datetime import datetime
-from redisorm.core import Persistent, PersistentData
+from redisorm.core import Persistent, PersistentData, Column
 from redisorm.proxy import BooleanProxy, DatetimeProxy, PersistentProxy
 import itertools
 
