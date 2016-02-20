@@ -5,11 +5,13 @@ import os
 import redis
 import sys
 import functools
-from flask import Flask, request, session, jsonify
+from mead.objects import JSONObject, response, Router
+from mead.server import Mead
 from datetime import datetime, timedelta
 import collections
 from functools import reduce
 import itertools
+import dateutil.parser
 
 
 APP_NAME = "everything"
@@ -24,16 +26,13 @@ load_all = persistent.load_all
 find = persistent.find
 get_max_id = persistent.get_max_id
 
-app = Flask(__name__)
-app.secret_key = os.environ.get("EVERYTHING_FLASK_SALT")
+
+# Start up mead
+router = Router()
+app = Mead(session_encrypt_key=os.environ.get("EVERYTHING_MEAD_SALT").encode("utf8"), router=router)
 
 auth_component = AuthComponent(salt=os.environ.get("EVERYTHING_AUTH_SALT"))
 User.set_default_auth_component(auth_component)
-
-
-@app.before_request
-def make_session_permanent():
-    session.permanent = True
 
 
 def find_user(username):
@@ -41,23 +40,23 @@ def find_user(username):
     return user
 
 
-@app.route('/api/auth.json')
-def auth():
+@router.route('/api/auth.json')
+def auth(ctx):
 
     r = {
         "auth": {
-            "name": session.get('user')
+            "name": ctx['session'].get('user')
         }
     }
-    if session.get('user') == "":
+    if ctx['session'].get('user') == "":
         r = {
             "message": "You are not authorized."
         }
-    return jsonify(results=r)
+    return response(JSONObject({"results":r}))
 
 
-@app.route('/api/recent.json')
-def api_recent():
+@router.route('/api/recent.json')
+def api_recent(ctx):
     def get_comments(limit, page):
         all_thread_comments = range(get_max_id(Comment), -1, -1)
 
@@ -68,17 +67,17 @@ def api_recent():
         for comment_id in itertools.islice(results, limit * (page - 1), limit * page):
             yield persistent.load(Comment, comment_id)
 
-    page = request.args.get("page", 1)
+    page = ctx["params"].get("page", 1)
     try:
         page = int(page)
     except ValueError:
         page = 1
-    r = [compose_json_from_comment(comment, "") for comment in get_comments(MAX_COMMENT_NUM, page)]
+    r = [compose_json_from_comment(ctx, comment, "") for comment in get_comments(MAX_COMMENT_NUM, page)]
 
-    return jsonify(results=r)
+    return response(JSONObject({"results": r}))
 
 
-def compose_json_from_comment(comment, query):
+def compose_json_from_comment(ctx, comment, query):
     try:
         author_name = comment.get_author().name
     except:
@@ -98,13 +97,13 @@ def compose_json_from_comment(comment, query):
             "name": thread_name
         },
         "auth": {
-            "name": session.get('user')
+            "name": ctx['session'].get('user')
         }
     }
 
 
-@app.route('/api/index.json')
-def api_thread_list():
+@router.route('/api/index.json')
+def api_thread_list(ctx):
 
     r = []
     red = redis.StrictRedis(decode_responses=True)
@@ -119,46 +118,46 @@ def api_thread_list():
             })
             list_title.append(title)
 
-    return jsonify(results=r)
+    return response(JSONObject({"results": r}))
 
 
-@app.route('/api/login.json', methods=["POST"])
-def api_login_get():
-    user = find_user(request.form.get('username'))
+@router.route('/api/login.json', methods=["POST"])
+def api_login_get(ctx):
+    user = find_user(ctx["params"].get('username'))
     r = {"message": "Authentification failed."}
-    session.clear()
+    ctx['session'].clear()
     if user:
-        t = user.login(request.form.get('password'))
+        t = user.login(ctx["params"].get('password'))
         if t is True:
-            create_session(user)
+            create_session(ctx, user)
             save(user)
             r = {"message": "okay"}
-    return jsonify(results=r)
+    return response(JSONObject({"results": r}))
 
 
-@app.route('/api/logout.json')
-def api_logout_get():
+@router.route('/api/logout.json')
+def api_logout_get(ctx):
     r = {"message": "okay"}
-    session.clear()
-    return jsonify(results=r)
+    ctx['session'].clear()
+    return response(JSONObject({"results": r}))
 
 
-@app.route('/api/thread.json')
-def api_thread_get():
+@router.route('/api/thread.json')
+def api_thread_get(ctx):
 
-    query = request.args.get("q", "")
-    page = request.args.get("page", 1)
+    query = ctx["query"].get("q", "")
+    page = ctx["query"].get("page", 1)
     try:
         page = int(page)
     except ValueError:
         page = 1
 
     if query == "":
-        return jsonify(results=[])
+        return response(JSONObject({"results": []}))
     thread = find(Thread, lambda x: x.name == query)
 
     if thread is None and query != "":
-        return jsonify(results=[])
+        return response(JSONObject({"results": []}))
 
     else:
         comments = thread.get_comments(limit=MAX_COMMENT_NUM, page=page)
@@ -166,10 +165,10 @@ def api_thread_get():
     r = collections.deque(maxlen=MAX_COMMENT_NUM)
 
     for comment in comments:
-        _json = compose_json_from_comment(comment, query)
+        _json = compose_json_from_comment(ctx, comment, query)
         r.append(_json)
 
-    return jsonify(results=list(r))
+    return response(JSONObject({"results": list(r)}))
 
 
 def protected(func):
@@ -177,10 +176,11 @@ def protected(func):
     @functools.wraps(func)
     def wrapper(*args, **kwargs):
         error = {"message": "This page is protected. Please login first."}
+        ctx = args[0]
 
-        if session.get('user') is None or session.get('expired_at') < datetime.now():
+        if ctx['session'].get('user') is None or dateutil.parser.parse(ctx['session'].get('expired_at')) < datetime.now():
 
-            response = jsonify(results=error)
+            response = response(JSONObject({"results": error}))
             return response
 
         return func(*args, **kwargs)
@@ -188,16 +188,16 @@ def protected(func):
     return wrapper
 
 
-@app.route('/api/comment.json', methods=["POST"])
+@router.route('/api/comment.json', methods=["POST"])
 @protected
-def api_comment():
-    query = request.form.get("q", "")
-    body = request.form.get("body", "")
+def api_comment(ctx):
+    query = ctx["params"].get("q", "")
+    body = ctx["params"].get("body", "")
     if query == "" or body == "":
-        return jsonify(results={"message": "Thread title and body must be not empty."})
+        return response(JSONObject({"results": {"message": "Thread title and body must be not empty."}}))
 
     thread = find(Thread, lambda x: x.name == query) or Thread(name=query)
-    user = find(User, lambda user: user.name == session.get("user"))
+    user = find(User, lambda user: user.name == ctx['session'].get("user"))
     comment = user.create_comment(thread, body)
 
     save(thread)
@@ -207,32 +207,32 @@ def api_comment():
     r.sadd(":".join([APP_NAME, "ThreadIndex"]), query)
     r.lpush(":".join([APP_NAME, "RecentThread"]), query)
 
-    return jsonify(results={"message": "okay"})
+    return response(JSONObject({"results": {"message": "okay"}}))
 
 
-def create_session(user):
-    session['user'] = user.name
-    session['user_id'] = user.id
-    session['expired_at'] = datetime.now() + timedelta(hours=100)
+def create_session(ctx, user):
+    ctx['session']['user'] = user.name
+    ctx['session']['user_id'] = user.id
+    ctx['session']['expired_at'] = str(datetime.now() + timedelta(hours=100))
 
 
-@app.route('/api/signup.json', methods=["POST"])
-def signup_api_get():
-    if request.form.get('username', "") == "":
-        return jsonify(results={"message": "Missing username."})
-    if request.form.get('password', "") == "":
-        return jsonify(results={"message": "Missing password."})
+@router.route('/api/signup.json', methods=["POST"])
+def signup_api_get(ctx):
+    if ctx["params"].get('username', "") == "":
+        return response(JSONObject({"results": {"message": "Missing username."}}))
+    if ctx["params"].get('password', "") == "":
+        return response(JSONObject({"results": {"message": "Missing password."}}))
 
-    user = find_user(request.form.get('username'))
+    user = find_user(ctx["params"].get('username'))
     if user:
-        return jsonify(results={"message": "This username is already taken."})
+        return response(JSONObject({"results": {"message": "This username is already taken."}}))
 
-    user = User(name=request.form.get('username'), password=auth_component.get_hashed_value(request.form.get('password')))
+    user = User(name=ctx["params"].get('username'), password=auth_component.get_hashed_value(ctx["params"].get('password')))
     save(user)
 
-    create_session(user)
-    return jsonify(results={"message": "okay"})
+    create_session(ctx,user)
+    return response(JSONObject({"results": {"message": "okay"}}))
 
 
 if __name__ == '__main__':
-    app.run(port=9010, debug=True)
+    app.serve(port=9010)
