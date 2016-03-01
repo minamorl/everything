@@ -1,5 +1,5 @@
-from everything.models import Thread, Comment, User
-from everything.components import AuthComponent
+from .models import Thread, Comment, User
+from .components import AuthComponent
 from redisorm.core import Persistent, PersistentData
 import os
 import redis
