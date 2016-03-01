@@ -19,12 +19,7 @@ TOP_MAX_COMMENT_NUM = 100
 RECENT_COMMENT_NUM = 20
 MAX_COMMENT_NUM = 10
 
-persistent = Persistent(APP_NAME)
-save = persistent.save
-load = persistent.load
-load_all = persistent.load_all
-find = persistent.find
-get_max_id = persistent.get_max_id
+p = Persistent(APP_NAME)
 
 
 # Start up mead
@@ -32,11 +27,10 @@ router = Router()
 app = Mead(session_encrypt_key=os.environ.get("EVERYTHING_MEAD_SALT").encode("utf8"), router=router)
 
 auth_component = AuthComponent(salt=os.environ.get("EVERYTHING_AUTH_SALT"))
-User.set_default_auth_component(auth_component)
 
 
 def find_user(username):
-    user = find(User, lambda x: x.name == username)
+    user = p.find(User, lambda x: x.name == username)
     return user
 
 
@@ -60,14 +54,14 @@ async def api_recent(ctx):
     params, session = await ctx.params, await ctx.session
 
     def get_comments(limit, page):
-        all_thread_comments = range(get_max_id(Comment), -1, -1)
+        all_thread_comments = range(p.get_max_id(Comment), -1, -1)
 
         results = []
         for comment_id in all_thread_comments:
             results.append(comment_id)
 
         for comment_id in itertools.islice(results, limit * (page - 1), limit * page):
-            yield persistent.load(Comment, comment_id)
+            yield p.load(Comment, comment_id)
 
     page = params.get("page", 1)
     try:
@@ -130,7 +124,7 @@ async def api_login_get(ctx):
         t = user.login(params.get('password'))
         if t is True:
             create_session(session, user)
-            save(user)
+            p.save(user)
             r = {"message": "okay"}
     return response(JSONObject({"results": r}))
 
@@ -155,7 +149,7 @@ async def api_thread_get(ctx):
 
     if query == "":
         return response(JSONObject({"results": []}))
-    thread = find(Thread, lambda x: x.name == query)
+    thread = p.find(Thread, lambda x: x.name == query)
 
     if thread is None and query != "":
         return response(JSONObject({"results": []}))
@@ -197,12 +191,12 @@ async def api_comment(ctx):
     if query == "" or body == "":
         return response(JSONObject({"results": {"message": "Thread title and body must be not empty."}}))
 
-    thread = find(Thread, lambda x: x.name == query) or Thread(name=query)
-    user = find(User, lambda user: user.name == session.get("user"))
+    thread = p.find(Thread, lambda x: x.name == query) or Thread(name=query)
+    user = p.find(User, lambda user: user.name == session.get("user"))
     comment = user.create_comment(thread, body)
 
-    save(thread)
-    save(comment)
+    p.save(thread)
+    p.save(comment)
 
     r = redis.StrictRedis(decode_responses=True)
     r.sadd(":".join([APP_NAME, "ThreadIndex"]), query)
@@ -243,11 +237,12 @@ async def signup_api_get(ctx):
         return response(e.args[0])
 
     user = User(name=username, password=auth_component.get_hashed_value(password))
-    save(user)
+    p.save(user)
 
     create_session(session, user)
     return response(JSONObject({"results": {"message": "okay"}}))
 
 
 if __name__ == '__main__':
+    User.set_default_auth_component(auth_component)
     app.serve(port=9010)
